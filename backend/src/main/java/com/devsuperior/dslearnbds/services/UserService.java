@@ -17,28 +17,32 @@ import com.devsuperior.dslearnbds.repositories.UserRepository;
 import com.devsuperior.dslearnbds.services.exceptions.ResourceNotFoundException;
 
 @Service
-public class UserService implements UserDetailsService{
+public class UserService implements UserDetailsService {
 
 	private static Logger logger = LoggerFactory.getLogger(UserService.class);
 	@Autowired
 	private UserRepository userRepository;
 	
+	@Autowired
+	AuthService authService;
+
 	@Transactional(readOnly = true)
 	public UserDTO findById(Long id) {
+		authService.validateSelfOrAdmin(id);
 		Optional<User> obj = userRepository.findById(id);
 		User entity = obj.orElseThrow(() -> new ResourceNotFoundException("Entity not found"));
 		return new UserDTO(entity);
 	}
-	
-	
+
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 		User user = userRepository.findByEmail(username);
-		if(user == null) {
+		if (user == null) {
 			logger.error("Usuario não encontrado: " + username);
 			throw new UsernameNotFoundException("Email não encontrado");
 		}
 		logger.info("Usuario encontrado!");
 		return user;
-	}	
+	}
+
 }
