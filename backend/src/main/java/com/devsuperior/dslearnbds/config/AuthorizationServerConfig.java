@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
@@ -39,6 +40,8 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 	private AuthenticationManager authenticationManager;
 	@Autowired 
 	private JwtTokenEnhancer tokenEnhancer;
+	@Autowired
+	private UserDetailsService userDetailsService;
 
 	@Override
 	public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
@@ -51,10 +54,10 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 		.withClient(clientId)
 		.secret(passwordEncoder.encode(clientSecret))
 		.scopes("read","write")
-		.authorizedGrantTypes("password")
-		.accessTokenValiditySeconds(jwtDuration);
+		.authorizedGrantTypes("password", "refresh_token")
+		.accessTokenValiditySeconds(jwtDuration)
+		.refreshTokenValiditySeconds(jwtDuration);
 	}
-
 	@Override
 	public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
 		
@@ -62,7 +65,9 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 		chain.setTokenEnhancers(Arrays.asList(accessTokenConverter,tokenEnhancer));
 		endpoints.authenticationManager(authenticationManager)
 		.tokenStore(tokenStore)
-		.accessTokenConverter(accessTokenConverter).tokenEnhancer(chain);
+		.accessTokenConverter(accessTokenConverter)
+		.tokenEnhancer(chain)
+		.userDetailsService(userDetailsService);
 	}
 
 }
